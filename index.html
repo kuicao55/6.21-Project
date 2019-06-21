@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LogAnalysis</title>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for("static",filename="css/main.css") }}">
+</head>
+<style>
+.mssjfl{
+    padding-bottom: 10px;
+}
+.fileUpload {
+	position: relative;
+	overflow: hidden;
+	margin: 10px;
+}
+
+.fileUpload input.upload {	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	font-size: 20px;
+	cursor: pointer;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+</style>
+<body>
+
+<div class="main container-fluid">
+    <div style="text-align: center"><h2>LogAnalysis</h2></div>
+<div class="mssuja">
+
+    <div class="mssjfl">
+    <form id="uploadForm" class="form-horizontal"  enctype="multipart/form-data">
+        <div class="form-container">
+            <div style="width:72%; float:left;">
+                <input id="csv_label" placeholder="Choose CSV File" disabled="disabled"/>
+{#                <label id="csv_label" for="csv" class="button">Choose CSV File</label>#}
+                <div class="fileUpload btn btn-primary">
+                    <span>+</span>
+                    <input id="csv" type="file" class="upload" name="csv"/>
+                </div>
+                <button type="button" class="btn btn-primary" id="present">Upload</button><br>
+                <input id="log_label" placeholder="Choose LOG File" disabled="disabled"/>
+{#                <label for="log" class="button">Choose LOG File</label>#}
+                <div class="fileUpload btn btn-primary">
+                    <span>+</span>
+                    <input id="log" type="file" class="upload" name="log"/>
+                </div>
+            </div>
+            <div style="padding-top: 32px">
+            </div>
+        <button type="button" class="btn btn-primary" id="analysisBtn">Analyse</button>
+        </div>
+    </form>
+    </div>
+
+    <div class="result" style="float:left;width:100%;" id="res">
+
+        <div class="mssjfl" style="text-align:center; width:49%; float:left;">
+            <ul>Fail Item</ul>
+            <div id="csv_res" class="result"></div>
+        </div>
+        <div class="mssjfl" style="text-align:center; width:49%; float:right;">
+            <ul>Log Content</ul>
+            <div id="log_res"></div>
+        </div>
+    </div>
+
+
+</div>
+
+</div>
+
+
+</body>
+<script>
+
+    document.getElementById("csv").onchange = function () {
+        document.getElementById("csv_label").value = this.value;
+    };
+    document.getElementById("log").onchange = function () {
+        document.getElementById("log_label").value = this.value;
+    };
+    function showlog(timestamp) {
+            $.ajax({
+                url: "/log",
+                type: "GET",
+                data: {"timestamp": timestamp},
+                contentType: "json",
+                success: function (data) {
+                    if (data["code"] == 1) {
+                        document.getElementById("log_res").innerHTML = data["log"].replace(/\n/g,"<br>");
+                    }else{
+                        document.getElementById("log_res").innerHTML = data["msg"];
+                    }
+
+                },
+                error: function (err) {
+                }
+            });
+    }
+
+    $("#present").click(function() {
+
+        var formData = new FormData();
+        formData.append("csv", document.getElementById("csv").files[0]);
+         //执行上传
+         $.ajax({
+              url: "/present",
+              type: "POST",
+              data: formData,
+              cache: false,
+              processData: false,
+              contentType: false,
+              success: function(data) {
+                  if (data["code"] == 1) {
+                      var html = "";
+                      var alls = data["all"];
+                      for(var i=0;i<alls.length;i++){
+                          html += '<input type="button" class="btn btn-primary" value="'+ alls[i] + '" onclick="showlog(\''+alls[i]+'\')" /><br><br>';
+                      }
+                      document.getElementById("csv_res").innerHTML = html;
+                  }
+
+                },
+              error: function(err) {
+              }
+        });
+ });
+
+    $("#analysisBtn").click(function() {
+
+        var formData = new FormData();
+        formData.append("csv", document.getElementById("csv").files[0]);
+        formData.append("log", document.getElementById("log").files[0]);
+         //执行上传
+         $.ajax({
+              url: "/",
+              type: "POST",
+              data: formData,
+              cache: false,
+              processData: false,
+              contentType: false,
+              success: function(data) {
+                  if (data["code"] == 1) {
+                      var html = "";
+                      var fails = data["all"];
+                      for(var i=0;i<fails.length;i++){
+                          html += '<input type="button" class="btn btn-primary" value="'+ fails[i] + '" onclick="showlog(\''+fails[i]+'\')" /><br><br>';
+                      }
+                      document.getElementById("csv_res").innerHTML = html;
+                  }
+
+                },
+              error: function(err) {
+              }
+        });
+ });
+</script>
+</html>
